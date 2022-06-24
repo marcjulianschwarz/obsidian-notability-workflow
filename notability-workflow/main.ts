@@ -16,10 +16,14 @@ import * as fs from "fs";
 
 interface NotabilityWorkflowSetting {
 	saveFolder: string;
+	apiKey: string;
+	dropboxFolder: string;
 }
 
 const DEFAULT_SETTINGS: NotabilityWorkflowSetting = {
-	saveFolder: "/",
+	saveFolder: "",
+	apiKey: "",
+	dropboxFolder: "",
 };
 
 export default class NotabilityWorkflow extends Plugin {
@@ -33,7 +37,14 @@ export default class NotabilityWorkflow extends Plugin {
 			name: "Load Notability Files",
 			callback: () => {
 				let path = this.getVaultPath() + "/" + this.settings.saveFolder;
-				new NotabilityLoader(path).loadNotes();
+				let dropboxFolder = this.settings.dropboxFolder;
+				let apiKey = this.settings.apiKey;
+				new NotabilityLoader(
+					this.getVaultPath(),
+					path,
+					dropboxFolder,
+					apiKey
+				).loadNotes();
 			},
 		});
 
@@ -132,6 +143,32 @@ class NotabilityWorkflowTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.saveFolder)
 					.onChange(async (value) => {
 						this.plugin.settings.saveFolder = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("API Key")
+			.setDesc("API Key for Dropbox.")
+			.addText((text) =>
+				text
+					.setPlaceholder("")
+					.setValue(this.plugin.settings.apiKey)
+					.onChange(async (value) => {
+						this.plugin.settings.apiKey = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Dropbox Folder")
+			.setDesc("Folder to sync to Obsidian.")
+			.addText((text) =>
+				text
+					.setPlaceholder("")
+					.setValue(this.plugin.settings.dropboxFolder)
+					.onChange(async (value) => {
+						this.plugin.settings.dropboxFolder = value;
 						await this.plugin.saveSettings();
 					})
 			);
